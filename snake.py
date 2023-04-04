@@ -4,6 +4,7 @@ import mss
 import math
 import networkx as nx
 from queue import PriorityQueue
+from collections import deque
 import pyautogui
 
 
@@ -11,9 +12,15 @@ template_apple = cv2.imread('manzana2.jpg', cv2.IMREAD_GRAYSCALE)
 w, h = template_apple.shape[::-1]
 direction=0
 #matrix=numpy.empty((15,17),dtype=str)
+snake = deque()
+snake.append((7,4))
+snake.append((7,3))
+snake.append((7,2))
+snake.append((7,1))
 matrix=numpy.zeros((15,17),dtype=int)
 apple_pos=(7,12)
 head_init=(7,4)
+aux_apple_pos =(7,12)
 #matrix[apple_pos[0]][apple_pos[1]]="M"
 matrix[apple_pos[0]][apple_pos[1]]=1
 #matrix[7][4]="C"
@@ -72,13 +79,20 @@ def create_graph(matrix_game):
             node = (i, j)
             neighbors = []
             if i > 0:
-                neighbors.append((i-1, j))
+                if matrix[i-1][j] == 0 or matrix[i-1][j] == 1 :
+                    neighbors.append((i-1, j))
             if i < matrix_game.shape[0] - 1:
-                neighbors.append((i+1, j))
+                if matrix[i+1][j] == 0 or matrix[i+1][j] == 1:
+                    neighbors.append((i+1, j))
+                
             if j > 0:
-                neighbors.append((i, j-1))
+                if matrix[i][j-1] == 0 or matrix[i][j-1] == 1:
+                    neighbors.append((i, j-1))
+                
             if j < matrix_game.shape[1] - 1:
-                neighbors.append((i, j+1))
+                if matrix[i][j+1] == 0 or matrix[i][j+1] == 1:
+                    neighbors.append((i, j+1))
+            
             graph[node] = neighbors
     return graph
 
@@ -88,6 +102,8 @@ def compute(cor_x_apple, cor_y_apple):
     global head_init
     global grafo
     global matrix
+    global aux_apple_pos
+    global size
 
 
     apple_pos=(math.floor(cor_y_apple/32)-1,math.floor(cor_x_apple/32)-1)
@@ -98,11 +114,32 @@ def compute(cor_x_apple, cor_y_apple):
     print(apple_pos[0],apple_pos[1])
     graph = create_graph(matrix)
 
-    path = dijkstra(head_init, apple_pos, graph)
-    #head_init = apple_pos
+    
 
-    print(path)
-    print("____________________")
+    if aux_apple_pos != apple_pos:
+        head_init = aux_apple_pos
+        aux_apple_pos = apple_pos
+        size +=1
+        path = dijkstra(head_init, apple_pos, graph)
+        
+        snake_size = len(snake)
+        min_snake = min(size, len(path)-1)
+        for i in range(len(path)-1):
+            if i >= snake_size :
+                break
+            snake.pop()
+        list_snake = deque(snake)
+        snake.clear()
+        for i in range(1,min_snake+1):
+            snake.append(path[-i])
+        snake.extend(list_snake)
+        matrix = numpy.where(matrix == 3, 0, matrix)
+        for i in range(len(snake)):
+            matrix[snake[i][0]][snake[i][1]] = 3
+        print(path)
+        print("____________________")
+        print(snake)
+        print(list_snake)
 
 """
     # Añadimos los nodos al grafo
@@ -141,6 +178,7 @@ with mss.mss() as sct:
             cor_y_apple = (top_left_apple[1] + bottom_right_apple[1]) / 2
             #cv2.rectangle(img, (30, 30), (570, 510), 255, 2)
             #cv2.circle(img, (int(cor_x_Manzana), int(cor_y_Manzana)), 2, (0, 0, 255), -1)
+            
             compute(cor_x_apple, cor_y_apple)
         cv2.imshow('juego', img)
         # Press "q" to quit
