@@ -6,6 +6,7 @@ import networkx as nx
 from queue import PriorityQueue
 from collections import deque
 import pyautogui
+import time
 
 
 template_apple = cv2.imread('manzana2.jpg', cv2.IMREAD_GRAYSCALE)
@@ -24,10 +25,11 @@ aux_apple_pos =(7,12)
 #matrix[apple_pos[0]][apple_pos[1]]="M"
 matrix[apple_pos[0]][apple_pos[1]]=1
 #matrix[7][4]="C"
-matrix[7][4]=2
+matrix[7][12]=2
 #matrix[7][1:4]="S"
-matrix[7][1:4]=3
+matrix[7][9:12]=3
 size=4
+direction = 1
 
 
 # Creamos un grafo vacío
@@ -122,6 +124,7 @@ def compute(cor_x_apple, cor_y_apple):
         size +=1
         path = dijkstra(head_init, apple_pos, graph)
         
+        move(path)
         snake_size = len(snake)
         min_snake = min(size, len(path)-1)
         for i in range(len(path)-1):
@@ -137,9 +140,35 @@ def compute(cor_x_apple, cor_y_apple):
         for i in range(len(snake)):
             matrix[snake[i][0]][snake[i][1]] = 3
         print(path)
-        print("____________________")
-        print(snake)
-        print(list_snake)
+        #print("____________________")
+        #print(snake)
+        #print(list_snake)
+
+def move(path):
+    time2 = 0 
+    if len(path) > 10:
+        time2 = 0.04
+
+    for i in range(len(path)-1):
+        if path[i][0] > path[i+1][0]:
+            print("up")
+            pyautogui.press("up")
+            time.sleep(time2)
+        elif path[i][0] < path[i+1][0]:
+            print("down")
+            pyautogui.press("down")
+            time.sleep(time2)
+        elif path[i][1] > path[i+1][1]:
+            print("left")
+            time.sleep(time2)
+            pyautogui.press("left")
+        elif path[i][1] < path[i+1][1]:
+            print("right")
+            pyautogui.press("right")
+            time.sleep(time2)
+
+
+
 
 """
     # Añadimos los nodos al grafo
@@ -180,7 +209,7 @@ with mss.mss() as sct:
             #cv2.circle(img, (int(cor_x_Manzana), int(cor_y_Manzana)), 2, (0, 0, 255), -1)
             
             compute(cor_x_apple, cor_y_apple)
-        cv2.imshow('juego', img)
+        #cv2.imshow('juego', img)
         # Press "q" to quit
         if cv2.waitKey(25) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
